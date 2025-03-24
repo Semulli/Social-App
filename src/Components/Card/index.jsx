@@ -11,9 +11,9 @@ import {
   Box,
   Dialog,
   DialogActions,
-  DialogContent,
   DialogTitle,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { Favorite, Share, Delete, MoreVert } from "@mui/icons-material";
 import { useData } from "../GlobalProvider/GlobalProvider";
@@ -25,16 +25,24 @@ const PostCard = () => {
   const [open, setOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
+  const [loading, setLoading] = useState(true); 
 
   const getAllPosts = async () => {
-    const response = await getPosts();
-    setUser(response);
+    setLoading(true); 
+    try {
+      const response = await getPosts();
+      setUser(response);
 
-    const timeData = response.reduce((acc, post) => {
-      acc[post.id] = Date.now();
-      return acc;
-    }, {});
-    setTimestamps(timeData);
+      const timeData = response.reduce((acc, post) => {
+        acc[post.id] = Date.now();
+        return acc;
+      }, {});
+      setTimestamps(timeData);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setLoading(false); 
+    }
   };
 
   useEffect(() => {
@@ -100,7 +108,9 @@ const PostCard = () => {
         mt: 4,
       }}
     >
-      {filteredPosts.length > 0 ? (
+      {loading ? (
+        <CircularProgress size={50} />
+      ) : filteredPosts.length > 0 ? (
         filteredPosts.map((item) => (
           <Card
             key={item.id}
@@ -128,7 +138,11 @@ const PostCard = () => {
 
             <CardMedia
               component="img"
-              image={item.image}
+              image={
+                item?.image && item.image.trim() !== ""
+                  ? item.image
+                  : "https://via.placeholder.com/500x300?text=No+Image+Available"
+              }
               alt="Post image"
               sx={{
                 objectFit: "cover",
